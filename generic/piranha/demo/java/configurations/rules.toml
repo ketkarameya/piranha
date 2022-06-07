@@ -21,9 +21,9 @@ query = """
 (#eq? @enum_name "@experiment_enum")
 )
     """
-replace_node = "enum_entry"
+replace_node = "ec"
 replace = ""
-holes = ["stale_flag_name"]
+holes = ["stale_flag_name", "experiment_enum"]
 
 #
 # For @stale_flag_name = STALE_FLAG and @treated = true
@@ -52,4 +52,4 @@ query = """((
 replace_node = "method_invocation"
 replace = "@treated_complement"
 groups = [ "replace_expression_with_boolean_literal"]
-holes = ["treated_complement", "stale_flag_name"]
+holes = ["treated_complement", "stale_flag_name", "experiment_enum"]
