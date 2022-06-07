@@ -34,17 +34,17 @@ holes = ["stale_flag_name", "experiment_enum"]
 #
 [[rules]]
 name = "replace_isToggleEnabled_with_boolean_literal"
-query = """((
+query = """(
     (method_invocation 
         name : (_) @name
         arguments: (argument_list 
-                        (field_access 
-                          object: (_) @qualifier
-                          field: (_)@argument)
-                         )
+                        [
+                          (field_access object: (_) @qualifier field: (_)@argument)
+                          (_) @argument
+                         ])
             
     ) @method_invocation
-)
+
 (#eq? @name "isToggleEnabled")
 (#eq? @argument "@stale_flag_name")
 (#eq? @qualifier "@experiment_enum")
