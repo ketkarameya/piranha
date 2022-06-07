@@ -11,33 +11,19 @@
 
 # This file contains rules to the specific feature flag API.
 
-#
-# For @stale_flag_name = STALE_FLAG and @treated = true
-# Before 
-#  exp.isToggleEnabled(Experiment.STALE_FLAG)
-# After 
-#  true
-#
 [[rules]]
-name = "replace_isToggleEnabled_with_boolean_literal"
-query = """((
-    (method_invocation 
-        name : (_) @name
-        arguments: ((argument_list 
-                        ([
-                          (field_access field: (_)@argument)
-                          (_) @argument
-                         ])) )
-            
-    ) @method_invocation
+name = "delete_enum_constant"
+query = """
+  (
+(enum_declaration (_) @enum_name 
+	(enum_body (enum_constant name : (_) @name) @ec))       
+(#eq? @name  "@stale_flag_name")
+(#eq? @enum_name "@experiment_enum")
 )
-(#eq? @name "isToggleEnabled")
-(#eq? @argument "@stale_flag_name")
-)"""
-replace_node = "method_invocation"
-replace = "@treated"
-groups = [ "replace_expression_with_boolean_literal"]
-holes = ["treated", "stale_flag_name"]
+    """
+replace_node = "enum_entry"
+replace = ""
+holes = ["stale_flag_name"]
 
 #
 # For @stale_flag_name = STALE_FLAG and @treated = true
@@ -47,20 +33,21 @@ holes = ["treated", "stale_flag_name"]
 #  false
 #
 [[rules]]
-name = "replace_isToggleDisabled_with_boolean_literal"
+name = "replace_isToggleEnabled_with_boolean_literal"
 query = """((
     (method_invocation 
         name : (_) @name
-        arguments: ((argument_list 
-                        ([
-                          (field_access field: (_)@argument)
-                          (_) @argument
-                         ])) )
+        arguments: (argument_list 
+                        (field_access 
+                          object: (_) @qualifier
+                          field: (_)@argument)
+                         )
             
     ) @method_invocation
 )
-(#eq? @name "isToggleDisabled")
+(#eq? @name "isToggleEnabled")
 (#eq? @argument "@stale_flag_name")
+(#eq? @qualifier "@experiment_enum")
 )"""
 replace_node = "method_invocation"
 replace = "@treated_complement"

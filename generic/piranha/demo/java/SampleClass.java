@@ -12,11 +12,7 @@
 class SampleJava {
 
   public void sampleMethod(ExperimentInterface exp) {
-    if (exp.isToggleEnabled(SAMPLE_STALE_FLAG)) {
-      System.out.println("SAMPLE_STALE_FLAG is enabled");
-    } else {
-      System.out.println("SAMPLE_STALE_FLAG is disabled");
-    }
+    System.out.println("SAMPLE_STALE_FLAG is enabled");
   }
 
   public void sampleMethod1(ExperimentInterface exp) {
@@ -25,5 +21,10 @@ class SampleJava {
     } else {
       System.out.println("SAMPLE_STALE_FLAG is enabled");
     }
+  }
+
+  public enum MyEnum{
+    SAMPLE_STALE_FLAG,
+    DRAGON_WARRIOR
   }
 }
