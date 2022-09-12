@@ -19,11 +19,26 @@ jobs:
             archive: zip
     steps:
       - uses: actions/checkout@master
-      - name: Compile and release
+      - name: Compile and release rust library
         uses: rust-build/rust-build.action@v1.3.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
+          SRC_DIR: polyglot/piranha
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Release with Maturin
+        uses: messense/maturin-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          maturin-version: latest
+          target: ${{ matrix.target }}
+          command: build
+          args: --release
           SRC_DIR: polyglot/piranha
