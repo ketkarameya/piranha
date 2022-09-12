@@ -27,11 +27,13 @@ jobs:
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
           SRC_DIR: polyglot/piranha
+          args: --no-default-features
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
+          SRC_DIR: polyglot/piranha
       - name: Release with Maturin
         uses: messense/maturin-action@v1
         env:
