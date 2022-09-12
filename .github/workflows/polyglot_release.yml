@@ -18,16 +18,16 @@ jobs:
           - target: x86_64-apple-darwin
             archive: zip
     steps:
-      - uses: actions/checkout@master
-      - name: Compile and release rust library
-        uses: rust-build/rust-build.action@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          RUSTTARGET: ${{ matrix.target }}
-          ARCHIVE_TYPES: ${{ matrix.archive }}
-          SRC_DIR: polyglot/piranha
-          args: --no-default-features
+      # - uses: actions/checkout@master
+      # - name: Compile and release rust library
+      #   uses: rust-build/rust-build.action@v1.3.2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     RUSTTARGET: ${{ matrix.target }}
+      #     ARCHIVE_TYPES: ${{ matrix.archive }}
+      #     SRC_DIR: polyglot/piranha
+      #     args: --no-default-features
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
