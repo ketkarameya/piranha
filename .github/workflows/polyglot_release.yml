@@ -37,8 +37,8 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       env:
-        GHR_PATH: polyglot/piranha/dist/*
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        files: polyglot/piranha/dist/*
+        token: ${{ secrets.GITHUB_TOKEN }}
       
   # release:
   #   name: release ${{ matrix.target }}
