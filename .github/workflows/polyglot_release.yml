@@ -1,8 +1,8 @@
 name: Release Polyglot Piranha
 on:
-  release:
-    types: [created]
-
+  push:
+    tags:
+      - ".*"
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -34,11 +34,13 @@ jobs:
         maturin build --release -o dist --universal2
       working-directory: polyglot/piranha
       if: matrix.os == 'macos-latest'
-    - name: Create GitHub Release
+    - name: Create Github release
       uses: softprops/action-gh-release@v1
-      env:
-        files: polyglot/piranha/dist/*
-        token: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        token: ${{github.token}}
+        prerelease: true
+        files: dist/*.whl
+        discussion_category_name: Releases
       
   # release:
   #   name: release ${{ matrix.target }}
