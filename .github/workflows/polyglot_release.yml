@@ -34,24 +34,12 @@ jobs:
         maturin build --release -o dist --universal2
       working-directory: polyglot/piranha
       if: matrix.os == 'macos-latest'
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: dist
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: wheels
-      - name: Create GitHub Release
-        uses: fnkr/github-action-ghr@v1.3
-        env:
-          GHR_PATH: .
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create GitHub Release
+      uses: fnkr/github-action-ghr@v1.3
+      env:
+        GHR_PATH: polyglot/piranha/dist
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
   # release:
   #   name: release ${{ matrix.target }}
   #   runs-on: ubuntu-latest
