@@ -2,7 +2,7 @@ name: Release Polyglot Piranha
 on:
   push:
     tags:
-      - ".*"
+      - "polyglotv0.1.2.5"
     branches:
       - "maturin_action"
 jobs:
