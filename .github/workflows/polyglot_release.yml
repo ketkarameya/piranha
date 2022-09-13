@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - ".*"
+    branches:
+      - ".*"
 jobs:
   build:
     runs-on: ${{ matrix.os }}
