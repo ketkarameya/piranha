@@ -41,8 +41,11 @@ jobs:
       with:
         token: ${{github.token}}
         prerelease: true
-        files: dist/*.whl
+        files: polyglot/piranha/dist/*.whl
         discussion_category_name: Releases
+        name: "Test Release"
+        body: "Test"
+
       
   # release:
   #   name: release ${{ matrix.target }}
