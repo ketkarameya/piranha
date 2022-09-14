@@ -33,7 +33,7 @@ jobs:
     - name: Create Pypi Release 
       run: |
         pip install twine
-        twine upload --skip-existing -r testpypi -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
+        twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
   
   build_mac_os:
@@ -74,5 +74,5 @@ jobs:
     - name: Create Pypi Release 
       run: |
         pip install twine
-        twine upload --skip-existing -r testpypi -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
+        twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
