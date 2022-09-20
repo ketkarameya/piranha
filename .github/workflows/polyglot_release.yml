@@ -17,14 +17,12 @@ jobs:
         pip install --upgrade maturin
         maturin build --release -o dist
       working-directory: polyglot/piranha
-    - if: ${{  inputs.isTestRelease  }}
-      name: TestPypi Release for ubuntu-latest
+    - name: TestPypi Release for ubuntu-latest
       run: |
         pip install twine
         twine upload --repository testpypi --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
-    # - if: ! ${{  inputs.isTestRelease  }} 
-    #   name: Pypi Release for ubuntu-latest
+    # - name: Pypi Release for ubuntu-latest
     #   run: |
     #     pip install twine
     #     twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
@@ -56,14 +54,12 @@ jobs:
         pip install --upgrade maturin
         maturin build --release -o dist --universal2
       working-directory: polyglot/piranha
-    - if: ${{  inputs.isTestRelease  }}
-      name: TestPypi Release for macos-latest
+    - name: TestPypi Release for macos-latest
       run: |
         pip install twine
         twine upload --repository testpypi --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
-    # - if: ! ${{  inputs.isTestRelease  }} 
-    #   name: Pypi Release macos-latest
+    # - name: Pypi Release macos-latest
     #   run: |
     #     pip install twine
     #     twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
@@ -86,14 +82,12 @@ jobs:
         pip install --upgrade maturin
         maturin build --release -o dist
       working-directory: polyglot/piranha
-    - if: ${{  inputs.isTestRelease  }}
-      name: TestPypi Release for macos-11
+    - name: TestPypi Release for macos-11
       run: |
         pip install twine
         twine upload --repository testpypi --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
-    # - if: ! ${{  inputs.isTestRelease  }} 
-    #   name: Pypi Release for macos-11
+    # - name: Pypi Release for macos-11
     #   run: |
     #     pip install twine
     #     twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
