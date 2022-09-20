@@ -1,12 +1,6 @@
 name: Release Polyglot Piranha
 on:
   workflow_dispatch:
-    inputs:
-      isTestRelease:
-        description: 'Should this be released on Testpypi ?'
-        required: true
-        default: true
-        type: boolean
 jobs:
   build_ubuntu:
     runs-on: ubuntu-latest
@@ -29,12 +23,12 @@ jobs:
         pip install twine
         twine upload --repository testpypi --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
-    - if: ! ${{  inputs.isTestRelease  }} 
-      name: Pypi Release for ubuntu-latest
-      run: |
-        pip install twine
-        twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
-      working-directory: polyglot/piranha
+    # - if: ! ${{  inputs.isTestRelease  }} 
+    #   name: Pypi Release for ubuntu-latest
+    #   run: |
+    #     pip install twine
+    #     twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
+    #   working-directory: polyglot/piranha
   
   build_mac_os:
     needs: build_ubuntu
@@ -68,12 +62,12 @@ jobs:
         pip install twine
         twine upload --repository testpypi --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
-    - if: ! ${{  inputs.isTestRelease  }} 
-      name: Pypi Release macos-latest
-      run: |
-        pip install twine
-        twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
-      working-directory: polyglot/piranha
+    # - if: ! ${{  inputs.isTestRelease  }} 
+    #   name: Pypi Release macos-latest
+    #   run: |
+    #     pip install twine
+    #     twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
+    #   working-directory: polyglot/piranha
 
 
   build_mac_os11:
@@ -98,9 +92,9 @@ jobs:
         pip install twine
         twine upload --repository testpypi --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
       working-directory: polyglot/piranha
-    - if: ! ${{  inputs.isTestRelease  }} 
-      name: Pypi Release for macos-11
-      run: |
-        pip install twine
-        twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
-      working-directory: polyglot/piranha
+    # - if: ! ${{  inputs.isTestRelease  }} 
+    #   name: Pypi Release for macos-11
+    #   run: |
+    #     pip install twine
+    #     twine upload --skip-existing -u ketkara -p ${{ secrets.PYPI_PASSWORD }} dist/*
+    #   working-directory: polyglot/piranha
