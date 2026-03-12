@@ -465,3 +465,156 @@ if (obj.isLocEnabled() || x > 0) {
     
     # The subsequent rule should still be triggered and delete the if statement
     assert "if (other_check) { }" not in result_code, "Subsequent rules should still be triggered"
+
+
+# =============================================================================
+# PYTHON CALLABLE MATCHER TESTS
+# =============================================================================
+
+def test_callable_match_only():
+    """A Python callable passed as `query` works as a match-only rule.
+
+    The callable receives (node_text: str, node_type: str) and returns:
+      - None / {}   → no match
+      - dict[str,str] → match (keys are tag names, "*" = full matched text)
+    """
+    matched_texts = []
+
+    def match_method_invocations(node_text: str, node_type: str):
+        """Match any method_invocation node."""
+        if node_type == "method_invocation":
+            return {"*": node_text}
+        return None
+
+    rule = Rule(
+        name="find_method_calls",
+        query=match_method_invocations,
+        is_seed_rule=True,
+    )
+
+    args = PiranhaArguments(
+        code_snippet="class Foo { void bar() { System.out.println(hello()); } }",
+        language="java",
+        rule_graph=RuleGraph(rules=[rule], edges=[]),
+        dry_run=True,
+    )
+
+    summaries = execute_piranha(args)
+
+    assert len(summaries) == 1
+    summary = summaries[0]
+    # Should have matched some method invocations
+    assert len(summary.matches) > 0
+    # All matched node types should have come from method invocations
+    for rule_name, match in summary.matches:
+        assert rule_name == "find_method_calls"
+        assert match.matched_string  # non-empty
+
+
+def test_callable_rewrite():
+    """A Python callable used in a rewrite rule replaces matched nodes."""
+
+    def match_println(node_text: str, node_type: str):
+        """Match System.out.println(...) calls only."""
+        if node_type == "method_invocation" and "println" in node_text:
+            return {"*": node_text}
+        return None
+
+    rule = Rule(
+        name="remove_println",
+        query=match_println,
+        replace_node="*",
+        replace="",
+        is_seed_rule=True,
+    )
+
+    args = PiranhaArguments(
+        code_snippet="class Foo { void bar() { System.out.println(\"hi\"); int x = 1; } }",
+        language="java",
+        rule_graph=RuleGraph(rules=[rule], edges=[]),
+        dry_run=True,
+    )
+
+    summaries = execute_piranha(args)
+
+    assert len(summaries) == 1
+    result = summaries[0].content
+    # The println call should have been removed
+    assert "println" not in result
+    # Unrelated code should remain
+    assert "int x = 1" in result
+
+
+def test_callable_with_named_captures():
+    """Callable can return named captures that are available in `match.matches`."""
+
+    def capture_identifiers(node_text: str, node_type: str):
+        if node_type == "identifier":
+            return {"name": node_text, "*": node_text}
+        return None
+
+    rule = Rule(
+        name="capture_names",
+        query=capture_identifiers,
+        is_seed_rule=True,
+    )
+
+    args = PiranhaArguments(
+        code_snippet="class Foo { int myVar = 42; }",
+        language="java",
+        rule_graph=RuleGraph(rules=[rule], edges=[]),
+        dry_run=True,
+    )
+
+    summaries = execute_piranha(args)
+    assert len(summaries) == 1
+    assert len(summaries[0].matches) > 0
+    for _, match in summaries[0].matches:
+        assert "name" in match.matches
+        assert match.matches["name"] == match.matched_string
+
+
+def test_callable_returns_none_means_no_match():
+    """When the callable always returns None, no matches are produced."""
+
+    def never_match(node_text: str, node_type: str):
+        return None
+
+    rule = Rule(
+        name="no_match",
+        query=never_match,
+        is_seed_rule=True,
+    )
+
+    args = PiranhaArguments(
+        code_snippet="class Foo { int x = 1; }",
+        language="java",
+        rule_graph=RuleGraph(rules=[rule], edges=[]),
+        dry_run=True,
+    )
+
+    summaries = execute_piranha(args)
+    total_matches = sum(len(s.matches) for s in summaries)
+    assert total_matches == 0
+
+
+def test_string_query_still_works_after_callable_change():
+    """Ensure existing string-based query= still works (no regression)."""
+    rule = Rule(
+        name="find_class",
+        query="(class_declaration) @cls",
+        is_seed_rule=True,
+    )
+
+    args = PiranhaArguments(
+        code_snippet="class Foo { }",
+        language="java",
+        rule_graph=RuleGraph(rules=[rule], edges=[]),
+        dry_run=True,
+    )
+
+    summaries = execute_piranha(args)
+    assert len(summaries) == 1
+    assert len(summaries[0].matches) == 1
+    assert "Foo" in summaries[0].matches[0][1].matched_string
+

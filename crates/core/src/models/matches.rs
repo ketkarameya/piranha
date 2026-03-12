@@ -17,7 +17,7 @@ use crate::utilities::tree_sitter_utilities::get_node_for_range;
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
-use pyo3::prelude::{pyclass, pymethods};
+use pyo3::prelude::{pyclass, pymethods, PyObject, Python};
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
@@ -466,13 +466,79 @@ impl Point {
   }
 }
 
+// =============================================================================
+// PYTHON CALLABLE MATCHER HELPERS
+// =============================================================================
+
+/// Try to match `node` against a Python callable.
+///
+/// The callable receives `(node_text: str, node_type: str)` and must return either:
+/// - `None` / an empty dict  → no match on this node
+/// - A `dict[str, str]`      → match, keys are tag names, values are captured text
+///
+/// The special key `"*"` conventionally holds the full matched text (used when
+/// the rule has `replace_node="*"`).
+fn try_match_node_with_callable(
+  py: Python<'_>, callable: &PyObject, node: Node, source_code: &str,
+) -> Option<Match> {
+  let node_text = source_code.get(node.start_byte()..node.end_byte()).unwrap_or("");
+  let node_type = node.kind();
+
+  let result = callable.call1(py, (node_text, node_type)).ok()?;
+
+  if result.is_none(py) {
+    return None;
+  }
+
+  let captures: HashMap<String, String> = result.extract(py).ok()?;
+  if captures.is_empty() {
+    return None;
+  }
+
+  Some(Match {
+    matched_string: node_text.to_string(),
+    range: Range::from(node.range()),
+    matches: captures,
+    associated_comma: None,
+    associated_comments: Vec::new(),
+    associated_leading_empty_lines: Vec::new(),
+  })
+}
+
+/// Walk `node` (and optionally its entire subtree) calling `callable` on each node.
+fn collect_callable_matches(
+  py: Python<'_>, callable: &PyObject, node: Node, source_code: &str, recursive: bool,
+  results: &mut Vec<Match>,
+) {
+  if let Some(m) = try_match_node_with_callable(py, callable, node, source_code) {
+    results.push(m);
+  }
+  if recursive {
+    let mut cursor = node.walk();
+    let children: Vec<Node> = node.children(&mut cursor).collect();
+    for child in children {
+      collect_callable_matches(py, callable, child, source_code, true, results);
+    }
+  }
+}
+
+/// Entry point: run a Python callable matcher over `node`.
+fn py_callable_get_matches(
+  callable: &PyObject, node: Node, source_code: &str, recursive: bool,
+) -> Vec<Match> {
+  Python::with_gil(|py| {
+    let mut results = Vec::new();
+    collect_callable_matches(py, callable, node, source_code, recursive, &mut results);
+    results
+  })
+}
+
 // Implements instance methods related to getting matches for rule
 impl SourceCodeUnit {
   /// Gets the first match for the rule in `self`
   pub(crate) fn get_matches(
     &self, rule: &InstantiatedRule, rule_store: &mut RuleStore, node: Node, recursive: bool,
-  ) -> Vec<Match> {
-    let mut output: Vec<Match> = vec![];
+  ) -> Vec<Match> {    let mut output: Vec<Match> = vec![];
     // Get all matches for the query in the given scope `node`.
     let (replace_node_tag, replace_node_idx) =
       if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
@@ -481,14 +547,18 @@ impl SourceCodeUnit {
         (rule.replace_node(), rule.replace_idx())
       };
 
-    let pattern = rule_store.query(&rule.query());
-    let mut all_query_matches = pattern.get_matches(
-      &node,
-      self.code().to_string(),
-      recursive,
-      replace_node_tag,
-      replace_node_idx,
-    );
+    let mut all_query_matches = if let Some(callable) = rule.custom_matcher() {
+      py_callable_get_matches(callable, node, self.code(), recursive)
+    } else {
+      let pattern = rule_store.query(&rule.query());
+      pattern.get_matches(
+        &node,
+        self.code().to_string(),
+        recursive,
+        replace_node_tag,
+        replace_node_idx,
+      )
+    };
 
     // Applies the filter and returns the first element
     for p_match in all_query_matches.iter_mut() {

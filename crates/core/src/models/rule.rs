@@ -25,7 +25,7 @@ pub(crate) enum DirectoryScope {
 use colored::Colorize;
 use derive_builder::Builder;
 use getset::Getters;
-use pyo3::prelude::{pyclass, pymethods};
+use pyo3::prelude::{pyclass, pymethods, PyAny, PyObject, PyResult, Python};
 use serde_derive::Deserialize;
 
 use crate::utilities::Instantiate;
@@ -40,6 +40,29 @@ use super::{
   filter::Filter,
   Validator,
 };
+
+/// Wrapper around an optional Python callable so that `Rule` can derive `PartialEq` / `Clone`.
+/// Two `PyCallableMatcher` values are equal only when both are `None`; distinct callables
+/// are always considered unequal (rule identity is determined by name anyway).
+#[derive(Debug, Default)]
+pub struct PyCallableMatcher(pub Option<PyObject>);
+
+impl Clone for PyCallableMatcher {
+  fn clone(&self) -> Self {
+    Self(self.0.clone())
+  }
+}
+
+impl PartialEq for PyCallableMatcher {
+  fn eq(&self, other: &Self) -> bool {
+    match (&self.0, &other.0) {
+      (None, None) => true,
+      _ => false,
+    }
+  }
+}
+
+impl Eq for PyCallableMatcher {}
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
 // Represents the `rules.toml` file
@@ -111,17 +134,26 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   keep_comment_regexes: HashSet<String>,
+
+  /// Optional Python callable used as a custom matcher instead of a query string.
+  /// Not serializable; only settable via the Python API.
+  #[builder(default)]
+  #[serde(skip)]
+  pub(crate) custom_matcher: PyCallableMatcher,
 }
 
 impl Rule {
   /// Dummy rules are helper rules that make it easier to define the rule graph
   pub(crate) fn is_dummy_rule(&self) -> bool {
-    *self.query() == default_query() && *self.replace_node() == default_replace_node()
+    *self.query() == default_query()
+      && self.custom_matcher.0.is_none()
+      && *self.replace_node() == default_replace_node()
   }
 
   /// Checks if a rule is `match-only` i.e. it has a query but no replace_node
   pub(crate) fn is_match_only_rule(&self) -> bool {
-    *self.query() != default_query() && *self.replace_node() == default_replace_node()
+    let has_query = *self.query() != default_query() || self.custom_matcher.0.is_some();
+    has_query && *self.replace_node() == default_replace_node()
   }
 }
 
@@ -178,16 +210,21 @@ macro_rules! piranha_rule {
 impl Rule {
   #[new]
   fn py_new(
-    name: String, query: Option<String>, replace: Option<String>, replace_idx: Option<u8>,
+    name: String, query: Option<&PyAny>, replace: Option<String>, replace_idx: Option<u8>,
     replace_node: Option<String>, holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
     filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
     keep_comment_regexes: Option<HashSet<String>>,
-  ) -> Self {
+  ) -> PyResult<Self> {
     let mut rule_builder = RuleBuilder::default();
 
     rule_builder.name(name);
     if let Some(q) = query {
-      rule_builder.query(CGPattern::new(q));
+      if q.is_callable() {
+        rule_builder.custom_matcher(PyCallableMatcher(Some(q.into())));
+      } else {
+        let query_str: String = q.extract()?;
+        rule_builder.query(CGPattern::new(query_str));
+      }
     }
 
     if let Some(replace) = replace {
@@ -222,7 +259,7 @@ impl Rule {
       rule_builder.keep_comment_regexes(keep_comment_regexes);
     }
 
-    rule_builder.build().unwrap()
+    Ok(rule_builder.build().unwrap())
   }
 
   fn __repr__(&self) -> String {
@@ -236,11 +273,12 @@ impl Rule {
 
 impl Validator for Rule {
   fn validate(&self) -> Result<(), String> {
-    let validation = self
-      .query()
-      .validate()
-      .and_then(|_: ()| self.filters().iter().try_for_each(|f| f.validate()));
-    validation
+    let query_validation = if self.custom_matcher.0.is_some() {
+      Ok(()) // callable rules don't have a string query to validate
+    } else {
+      self.query().validate()
+    };
+    query_validation.and_then(|_: ()| self.filters().iter().try_for_each(|f| f.validate()))
   }
 }
 
@@ -338,6 +376,11 @@ impl InstantiatedRule {
 
   pub fn filters(&self) -> &HashSet<Filter> {
     self.rule().filters()
+  }
+
+  /// Returns the Python callable matcher if this rule uses one instead of a string query.
+  pub fn custom_matcher(&self) -> Option<&PyObject> {
+    self.rule().custom_matcher.0.as_ref()
   }
 
   /// Check if this rule applies to the given file path based on its directory scope

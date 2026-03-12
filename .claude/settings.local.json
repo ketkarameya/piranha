@@ -1,0 +1,41 @@
+{
+  "enabledMcpjsonServers": [
+    "code-mcp"
+  ],
+  "enabledPlugins": {
+    "uber-dev@agent-marketplace": true,
+    "uber-reviewer@agent-marketplace": true
+  },
+  "extraKnownMarketplaces": {
+    "uber-code/devexp-agent-marketplace": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/ketkara/.local/share/aifx/marketplaces/uber-code/devexp-agent-marketplace"
+      }
+    }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/ketkara/repo/piranha/crates/core \u0026\u0026 cargo build 2\u003e\u00261)",
+      "Bash(export PATH=\"$HOME/.cargo/bin:$PATH\" \u0026\u0026 cd /Users/ketkara/repo/piranha/crates/core \u0026\u0026 cargo build 2\u003e\u00261)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/ketkara/.cargo/bin/**)",
+      "Read(//opt/**)",
+      "Bash(env | grep -i rust; env | grep -i cargo; env | grep PATH | head -5)",
+      "Bash(~/.cargo/bin/cargo build:*)",
+      "Bash(. \"$HOME/.cargo/env\" \u0026\u0026 cd /Users/ketkara/repo/piranha/crates/core \u0026\u0026 cargo check 2\u003e\u00261)",
+      "Bash(. \"$HOME/.cargo/env\" \u0026\u0026 cargo test 2\u003e\u00261 | tail -30)",
+      "Bash(~/.cargo/bin/cargo test:*)",
+      "Bash(~/.cargo/bin/cargo check:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh repo:*)",
+      "Bash(git remote:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh api:*)",
+      "Bash(git config:*)",
+      "Bash(grep -n \"fn get_edit\" /Users/ketkara/repo/piranha/crates/core/src/models/*.rs)"
+    ]
+  }
+}

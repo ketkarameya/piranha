@@ -10,7 +10,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Union, Callable
 
 # Languages that Piranha supports (see ./src/models/language.rs)
 PiranhaLanguage = Literal["java", "kt", "kotlin", "go", "python", "swift", "typescript", "tsx", "thrift", "strings", "scm", "scala", "ruby", "yaml", "yml"]
@@ -233,7 +233,7 @@ class Rule:
     def __init__(
         self,
         name: str,
-        query: Optional[str] = None,
+        query: Optional[Union[str, Callable[[str, str], Optional[dict[str, str]]]]] = None,
         replace_node: Optional[str] = None,
         replace: Optional[str] = None,
         groups: set[str] = set(),
@@ -249,8 +249,19 @@ class Rule:
         ------------
             name: str
                 Name of the rule
-            query: str
-                Tree-sitter query as string
+            query: str | Callable[[str, str], dict[str, str] | None]
+                Either a tree-sitter / concrete-syntax / regex query string, or a Python
+                callable used as a custom matcher.
+
+                When a callable is given it is invoked for every AST node with two
+                positional arguments:
+                  - node_text (str): the source text covered by the node
+                  - node_type (str): the tree-sitter node kind (e.g. "method_invocation")
+
+                It must return:
+                  - None or {} → this node does not match
+                  - dict[str, str] → match found; keys are tag names (use "*" for the
+                    full matched text, which is required when replace_node="*")
             replace_node: str
                 The tag corresponding to the node to be replaced
             replace: str

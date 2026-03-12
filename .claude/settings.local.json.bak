@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/ketkara/repo/piranha/crates/core && cargo build 2>&1)",
+      "Bash(export PATH=\"$HOME/.cargo/bin:$PATH\" && cd /Users/ketkara/repo/piranha/crates/core && cargo build 2>&1)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/ketkara/.cargo/bin/**)",
+      "Read(//opt/**)",
+      "Bash(env | grep -i rust; env | grep -i cargo; env | grep PATH | head -5)",
+      "Bash(~/.cargo/bin/cargo build:*)",
+      "Bash(. \"$HOME/.cargo/env\" && cd /Users/ketkara/repo/piranha/crates/core && cargo check 2>&1)",
+      "Bash(. \"$HOME/.cargo/env\" && cargo test 2>&1 | tail -30)",
+      "Bash(~/.cargo/bin/cargo test:*)",
+      "Bash(~/.cargo/bin/cargo check:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh repo:*)",
+      "Bash(git remote:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh api:*)",
+      "Bash(git config:*)",
+      "Bash(grep -n \"fn get_edit\" /Users/ketkara/repo/piranha/crates/core/src/models/*.rs)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "code-mcp"
+  ],
+  "enabledPlugins": {
+    "uber-dev@agent-marketplace": true,
+    "uber-reviewer@agent-marketplace": true
+  },
+  "extraKnownMarketplaces": {
+    "uber-code/devexp-agent-marketplace": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/ketkara/.local/share/aifx/marketplaces/uber-code/devexp-agent-marketplace"
+      }
+    }
+  }
+}
